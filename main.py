@@ -110,6 +110,7 @@ def score_titulo(titulo: str):
         "message": f"La película {titulo} fue estrenada en el año {estreno} con un score/popularidad de {score}."
     }
 
+
 import pandas as pd
 
 
@@ -135,3 +136,42 @@ def votos_titulo(titulo_de_la_filmacion: str):
     retorno += f" La misma cuenta con un total de {votos} valoraciones, con un promedio de {promedio}."
 
     return {"retorno": retorno}
+
+
+
+import pandas as pd
+
+
+# Cargar el DataFrame desde el archivo CSV
+data = pd.read_csv("actor_final.csv")
+
+@app.get("/actor/{nombre_actor}")
+def get_actor(nombre_actor: str):
+    # Filtrar las filas que contienen al actor especificado
+    actor_films = data[data["name"] == nombre_actor]
+
+    # Excluir las filas donde el actor es un director (si existe la columna "job")
+    if "job" in actor_films.columns:
+        actor_films = actor_films[actor_films["job"] != "Director"]
+
+    # Obtener la cantidad de películas del actor
+    cantidad_films = len(actor_films)
+
+    # Calcular el promedio de retorno del actor
+    promedio_retorno = actor_films["return"].mean()
+
+    # Obtener el éxito del actor según el promedio de retorno
+    exito = "Bajo"
+    if promedio_retorno > 1.0:
+        exito = "Alto"
+    elif promedio_retorno > 0.5:
+        exito = "Moderado"
+
+    return {
+        "actor": nombre_actor,
+        "cantidad_films": cantidad_films,
+        "promedio_retorno": promedio_retorno,
+        "exito": exito
+    }
+
+
