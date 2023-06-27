@@ -50,3 +50,39 @@ def peliculas_mes(mes: str):
     respuesta = month_unique.shape[0]
 
     return {'mes': mes, 'cantidad de peliculas': respuesta}
+
+
+
+import pandas as pd
+
+@app.get('/cantidad_filmaciones_dia/{dia}')
+def cantidad_filmaciones_dia(dia: str):
+    dia = dia.lower()
+    dias_semana = {
+        'lunes': 0,
+        'martes': 1,
+        'miércoles': 2,
+        'jueves': 3,
+        'viernes': 4,
+        'sábado': 5,
+        'domingo': 6
+    }
+
+    dia_numero = dias_semana.get(dia)
+    if dia_numero is None:
+        return {'error': 'Día inválido. Por favor, ingrese un día válido en español.'}
+
+    # Cargar el archivo CSV
+    df = pd.read_csv('movie_final.csv')
+
+    # Convertir la columna "release_date" a un objeto de tipo fecha
+    df['release_date'] = pd.to_datetime(df['release_date'], errors='coerce')
+
+    # Filtrar el DataFrame por el día de la semana especificado
+    dia_filtered = df[df['release_date'].dt.dayofweek == dia_numero]
+
+    # Contar la cantidad de filmaciones
+    cantidad = dia_filtered.shape[0]
+
+    return {'dia': dia, 'cantidad': cantidad}
+
