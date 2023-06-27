@@ -86,3 +86,26 @@ def cantidad_filmaciones_dia(dia: str):
 
     return {'dia': dia, 'cantidad': cantidad}
 
+
+import pandas as pd
+
+# Cargar el DataFrame con los datos de películas
+df = pd.read_csv("movie_final.csv")  # Reemplaza con la ruta correcta de tu archivo CSV
+
+@app.get("/score/{titulo}")
+def score_titulo(titulo: str):
+    # Buscar la película por título en el DataFrame
+    pelicula = df[df["title"] == titulo]
+    
+    # Verificar si se encontró una coincidencia
+    if len(pelicula) == 0:
+        return {"message": "No se encontró la película."}
+    
+    # Obtener el título, año de estreno y score/popularidad
+    titulo = pelicula["title"].values[0]
+    estreno = pelicula["release_year"].values[0]
+    score = pelicula["popularity"].values[0]
+    
+    return {
+        "message": f"La película {titulo} fue estrenada en el año {estreno} con un score/popularidad de {score}."
+    }
