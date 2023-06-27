@@ -138,7 +138,6 @@ def votos_titulo(titulo_de_la_filmacion: str):
     return {"retorno": retorno}
 
 
-
 import pandas as pd
 
 
@@ -172,6 +171,115 @@ def get_actor(nombre_actor: str):
         "cantidad_films": cantidad_films,
         "promedio_retorno": promedio_retorno,
         "exito": exito
+    }
+import pandas as pd
+
+# Cargar el archivo CSV
+df = pd.read_csv("direct.final.csv")
+
+@app.get("/director/{nombre_director}")
+def get_director(nombre_director: str):
+    director_movies = df[df["name"] == nombre_director]
+
+    if director_movies.empty:
+        return {"error": "No se encontraron datos para el director especificado."}
+
+    director_movies = director_movies[["name", "return", "title", "release_date", "budget", "revenue"]]
+    director_movies = director_movies.drop_duplicates(subset="title")
+
+    exito = director_movies["return"].mean()
+
+    peliculas = []
+    for _, row in director_movies.iterrows():
+        pelicula = {
+            "titulo": row["title"],
+            "fecha_lanzamiento": row["release_date"],
+            "retorno_individual": row["return"],
+            "costo": row["budget"],
+            "ganancia": row["revenue"],
+        }
+        peliculas.append(pelicula)
+
+    return {
+        "exito": exito,
+        "peliculas": peliculas,
+    }
+
+
+from typing import List
+import pandas as pd
+from sklearn.neighbors import NearestNeighbors
+
+
+df = pd.read_csv("movie_final.csv")
+model = NearestNeighbors(n_neighbors=50)  # Aumentamos el número de vecinos a considerar
+model.fit(df[["budget", "vote_average"]])
+
+def recommendation(title):
+    if title not in df["title"].values:
+        raise KeyError(f"The movie '{title}' is not present in the dataset.")
+
+    title_index = df[df["title"] == title].index[0]
+    distances, indices = model.kneighbors([df.loc[title_index, ["budget", "vote_average"]]])
+
+    recommended_titles = []
+    i = 0
+    while len(recommended_titles) < 5 and i < len(indices[0]):
+        index = indices[0, i]
+        recommended_title = df.loc[index, "title"]
+        if recommended_title != title and recommended_title not in recommended_titles:
+            recommended_titles.append(recommended_title)
+        i += 1
+
+    if len(recommended_titles) < 5:
+        remaining_indices = df.index[~df.index.isin(indices[0])]
+        remaining_titles = df.loc[remaining_indices, "title"].sample(n=5 - len(recommended_titles), random_state=42)
+        recommended_titles.extend(remaining_titles)
+
+    return recommended_titles
+
+@app.get('/recomendacion/{titulo}')
+def recomendacion(titulo: str):
+    try:
+        recomendaciones = recommendation(titulo)
+        return {'lista recomendada': recomendaciones}
+    except KeyError as e:
+        return {'error': str(e)}
+
+
+
+import pandas as pd
+
+
+# Cargar el archivo CSV
+df = pd.read_csv("direct.final.csv")
+
+@app.get("/director/{nombre_director}")
+def get_director(nombre_director: str):
+    director_movies = df[df["name"] == nombre_director]
+
+    if director_movies.empty:
+        return {"error": "No se encontraron datos para el director especificado."}
+
+    director_movies = director_movies[["name", "return", "title", "release_date", "budget", "revenue"]]
+    director_movies = director_movies.drop_duplicates(subset="title")
+
+    exito = director_movies["return"].mean()
+
+    peliculas = []
+    for _, row in director_movies.iterrows():
+        pelicula = {
+            "titulo": row["title"],
+            "fecha_lanzamiento": row["release_date"],
+            "retorno_individual": row["return"],
+            "costo": row["budget"],
+            "ganancia": row["revenue"],
+        }
+        peliculas.append(pelicula)
+
+    return {
+        "exito": exito,
+        "peliculas": peliculas,
     }
 
 
