@@ -109,3 +109,29 @@ def score_titulo(titulo: str):
     return {
         "message": f"La película {titulo} fue estrenada en el año {estreno} con un score/popularidad de {score}."
     }
+
+import pandas as pd
+
+
+# Cargar el archivo CSV en un DataFrame
+df = pd.read_csv("movie_final.csv")
+
+
+@app.get("/votos/{titulo_de_la_filmacion}")
+def votos_titulo(titulo_de_la_filmacion: str):
+    # Buscar la película por el título en el DataFrame
+    pelicula = df[df['title'] == titulo_de_la_filmacion]
+
+    if pelicula.empty:
+        return {"mensaje": "No se encontró ninguna película con ese título."}
+
+    votos = pelicula['vote_count'].values[0]
+    promedio = pelicula['vote_average'].values[0]
+
+    if votos < 2000:
+        return {"mensaje": "La película no cumple con el requisito mínimo de 2000 valoraciones."}
+
+    retorno = f"La película {titulo_de_la_filmacion} fue estrenada en el año {pelicula['release_year'].values[0]}."
+    retorno += f" La misma cuenta con un total de {votos} valoraciones, con un promedio de {promedio}."
+
+    return {"retorno": retorno}
